@@ -30,13 +30,18 @@ dd <- read_csv("https://assets-decodeurs.lemonde.fr/decodeurs/medias/foreverpoll
       category,
       "Presumptive",
       "Presumptive contamination"
+    ),
+    matrix_unit = case_when(
+      str_detect(matrix, "water") ~ "ng/L",
+      matrix == "Unknown" ~ "ng/L or ng/kg",
+      .default = "ng/kg"
     )
   )
 
 
 
 
-# ------------------ USER INTERFACE ------------------
+# ------------------ USER INTERFACE  ------------------
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -55,7 +60,7 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins 
   sidebarLayout(
     
-    # ------------------ sidebar ------------------
+    # ------------------ sidebar  ------------------
     sidebarPanel(
       
       # pickerInput(
@@ -98,7 +103,11 @@ ui <- fluidPage(
         resetValue = "",
         width = NULL
       )
-      
+      # plotOutput(
+      #   outputId = "plot_bar_top_5",
+      #   width = "100%", 
+      #   height = "50vh"
+      # )
       # selectInput(
       #   "metric", 
       #   label = "Select metric",
@@ -115,11 +124,6 @@ ui <- fluidPage(
         outputId = "plot_map",
         width = "100%", 
         height = "90vh"
-      ),
-      plotOutput(
-        outputId = "plot_bar",
-        width = "100%",
-        height = "50vh"
       )
     )
     
@@ -128,14 +132,10 @@ ui <- fluidPage(
 
 
 
-
-# ------------------ SERVER ------------------
+# ------------------ SERVER  ------------------
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-  
-  
-  # ------------------ filtered data for map ------------------
   
   # creating data used in map (applying filters...)
   dd_map <- reactive({ 
@@ -164,41 +164,6 @@ server <- function(input, output) {
     # )
   })
   
-  
-  # ------------------ filtered data for bar plot ------------------
-  
-  dd_bar <- reactive({
-    
-    # dd_map() %>%
-    req(input$category)
-    req(input$country)
-    req(input$type)
-    
-    dd %>% 
-      filter(
-        category %in% input$category,
-        country %in% input$country,
-        type %in% input$type,
-        str_detect(tolower(city), ifelse(
-          tolower(input$city) != "", 
-          tolower(input$city), 
-          "[a-zA-Z]")
-        )
-      ) %>% 
-      arrange(desc(pfas_sum)) %>%
-      mutate(
-        description = as.factor(paste0(name, "\n", city, ", ", country, ", ", year, "\nlongitude: ", lon, ", latitude: ", lat))
-      ) %>% 
-      slice_head(n = 10) %>% 
-      mutate(
-        description = fct_reorder(
-          .f = description, 
-          .x = pfas_sum, 
-          .desc = FALSE)
-      )
-    
-  })
-  
   # creating a continuous palette function
   # pal <- colorNumeric(
   #   palette = "Reds",
@@ -208,9 +173,6 @@ server <- function(input, output) {
   pal <- colorNumeric(
     palette = colorRampPalette(c('#CE3818', '#F9F54B'))(round(length(dd$pfas_sum)/500, 0)), 
     domain = dd$pfas_sum)
-  
-  
-  # ------------------ plot: map ------------------
   
   # creating the actual map
   output$plot_map <- renderLeaflet({
@@ -278,23 +240,21 @@ server <- function(input, output) {
         # clusterOptions = markerClusterOptions()
       )
     
-    # ------------------ plot: bar ------------------
-    
-    output$plot_bar <- renderPlot(
-      
-      ggplot(
-        data = dd_bar()
-      ) +
-        geom_col(
-          aes(
-            x = description,
-            y = pfas_sum
-          )
-        ) +
-        coord_flip() +
-        theme_fivethirtyeight()
-      
-    )
+    # output$plot_bar_top_5 <- renderPlot(
+    # 
+    #   ggplot(
+    #     data = dd_map() %>%
+    #       arrange(pfas_sum) %>%
+    #       slice_head(n = 5)
+    #   ) +
+    #     geom_bar(
+    #       x = paste0(name, " (", city, ")"),
+    #       y = pfas_sum
+    #     ) +
+    #     coord_flip() +
+    #     theme_fivethirtyeight()
+    # 
+    # )
     
   })
 }
