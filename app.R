@@ -216,14 +216,16 @@ server <- function(input, output) {
           input$category == "Presumptive contamination" ~ 0.7
         ),
         popup = paste(
-          "<strong>", dd_map()$name, "</strong><br><br>",
+          "<strong>", dd_map()$name, "</strong><br>",
+          dd_map()$matrix, "<br><br>",
           "<strong>PFAS sum:   ", format(
             round(dd_map()$pfas_sum, 1), 
             trim = TRUE,
             big.mark = "'", 
             na.encode = TRUE, 
             scientific = FALSE
-          ), "</strong><br>ng/L (water) or ng/kg (soil)<br><br>",
+          ), dd_map()$matrix_unit, "</strong><br><br>",
+          # ), "</strong><br>ng/L (water) or ng/kg (soil)<br><br>",
           "City:   ", dd_map()$city, "<br>", 
           "Country:   ", dd_map()$country, "<br>",
           "Sector:   ", dd_map()$sector, "<br>",
