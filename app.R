@@ -93,6 +93,14 @@ ui <- fluidPage(
         multiple = TRUE,
         selected = dd$type %>% unique()
       ),
+      pickerInput(
+        "matrix", 
+        label = "Select matrix",
+        choices = dd$matrix %>% unique(),
+        options = list(`actions-box` = TRUE),
+        multiple = TRUE,
+        selected = dd$matrix %>% unique()
+      ),
       searchInput(
         "city", 
         label = "Search for city",
@@ -143,12 +151,14 @@ server <- function(input, output) {
     req(input$category)
     req(input$country)
     req(input$type)
+    req(input$matrix)
     
     dd %>% 
       filter(
         category %in% input$category,
         country %in% input$country,
         type %in% input$type,
+        matrix %in% input$matrix,
         str_detect(tolower(city), ifelse(
           tolower(input$city) != "", 
           tolower(input$city), 
